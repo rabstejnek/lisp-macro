@@ -153,30 +153,48 @@ and "datas-as-case" is missing... till you write it.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 1. Make defthing work
 
-TODO 1a. Why does mapcar call #'car over the "has"?
-TODO 1b. Why is message set to a gensym?
-TODO 1c. Implement "data-as-case": 
+1a. Why does mapcar call #'car over the "has"?
+When mapcar calls #'car over "has" it returns just the variable names, not the default values of these variables. At this point the variables have already been initialized,
+so we are only concerned now with referencing the variable name, so the default value is not needed within "datas-as-case".
+
+1b. Why is message set to a gensym?
+Since it is within a macro we need to make sure it is "hygienic" and that there won't be a name clash with any other variables when the macro is used.
+
+1c. Implement "datas-as-case": 
 
     (datas-as-case '(name balance interest-rate))
     ==>
     ((NAME (LAMBDA NIL NAME)) 
      (BALANCE (LAMBDA NIL BALANCE)) 
      (INTEREST-RATE (LAMBDA NIL INTEREST-RATE)))
-    
+|#
+
+(defmacro datas-as-case(&rest datas)
+  `(mapcar (lambda(x)(list x `(lambda () ,x))) ,@datas))
+
+'(xpand(datas-as-case '(name balance interest-rate)))
+
+#|
 1d. Implement  "methods-as-case"
 
      (methods-as-case '((more (x) (+ x 1)) (less (x) (- x 1))))
      ==>
      ((MORE (LAMBDA (X) (+ X 1))) 
       (LESS (LAMBDA (X) (- X 1))))
-     
+|#
 
+(defmacro methods-as-case(&rest methods)
+  `(mapcar (lambda(x)(list (car x) `(lambda ,@(cdr x) ))) ,@methods))
+
+'(xpand(methods-as-case '((more (x) (+ x 1)) (less (x) (- x 1)))))
+
+#|
 Now that that is working, the following should
 expand nicely:
 |#
 
 ; but first, uncomment this code
-'(defthing
+(defthing
   account
   :has  ((name) (balance 0) (interest-rate .05))
   :does ((withdraw (amt)
@@ -189,11 +207,11 @@ expand nicely:
 
 #|
 
-TODO 1e. Show the result of expanding you account.
+1e. Show the result of expanding you account.
 |#
 
 ; uncomment this to see what an account looks like
-'(xpand (account))
+(xpand (account))
 
 #|
 1f. Fix "withdraw" in "account" such that if you withdraw more than
@@ -216,7 +234,7 @@ TODO 1f.. Show the output from the following function
 
 
 ; to run encapuatlion, uncomment the following
-'(encapsulation)
+(encapsulation)
 
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
