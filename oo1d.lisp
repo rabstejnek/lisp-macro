@@ -203,7 +203,6 @@ TODO 2a. Define an object "cirle" with variables x,y
   
 ; run this to peek inside circle
 ;(xpand (circle))
-
 #|
 TODO 2b. Define an object "rectangle" with variables x1,x2,y1,y2
     that all default value of 0. Add
@@ -214,7 +213,6 @@ TODO 2b. Define an object "rectangle" with variables x1,x2,y1,y2
     :has  ((x1 0) (x2 0) (y1 0) (y2 0))
     :does ((area ()
              (* (- y2 y1) (- x2 x1)))))
-
 #|
 TODO 2c. Show the output from the following test
 |#
@@ -275,13 +273,29 @@ object
     trimmed-account
 |#
 ; implement defklass here
+(defmacro defklass (klass &key self isa has does)
+  (let* ((b4          (and isa (gethash isa *meta*)))
+         (has-before  (and b4 (about-has b4)))
+         (does-before (and b4 (about-does b4))))
+  (setf (gethash klass *meta*)
+      (make-about :has has :does does)))
+  (let* ((message (gensym "MESSAGE")))
+     `(defun ,klass (&key ,@has) 
+            (let ((self (lambda (,message)
+                           (case ,message
+                             ,@(methods-as-case does)
+                             ,@(datas-as-case (mapcar #'car has))))))
+              (send self '_self! self)
+              (send self '_isa! ',klass)
+              self))))
+        
 (let ((_counter 0))
   (defun counter () (incf _counter)))
 (defun meta? (x)
   (and (symbolp x) 
        (eql (char (symbol-name x) 0) #\_)))
 ; uncomment the following when defklass is implemented
-'(defklass 
+(defklass 
   object 
   :has ((_self)  (_isa) (id (counter)))
   :does (
@@ -295,7 +309,7 @@ object
                           (push `(,one . ,(send _self one)) 
                                 slot-values)))))))
 ; uncomment the following when defklass is implemented
-'(defklass
+(defklass
   account
   :isa object
   :has  ((name) (balance 0) (interest-rate .05))
@@ -307,9 +321,9 @@ object
                    (incf balance
                          (* interest-rate balance)))))
 ; uncomment this to see what is going on
-'(xpand (account))
+(xpand (account))
 ; uncomment the following when defklass is implemented
-'(defklass
+(defklass
   trimmed-account
   :isa account
   :does ((withdraw (amt)
@@ -327,8 +341,8 @@ object
         (print `(inheritance ,(send acc 'withdraw 20))))
       ))
 ; TODO: 3a show that the following works correctly
-'(inheritance)
-'(xpand (trimmed-account))
+;(inheritance)
+;(xpand (trimmed-account))
 ; TODO: 3b. show that the following prints out the slots of an object.
 (defun meta ()
    (let ((acc (trimmed-account)))
