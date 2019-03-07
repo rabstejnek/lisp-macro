@@ -277,17 +277,20 @@ object
   (let* ((b4          (and isa (gethash isa *meta*)))
          (has-before  (and b4 (about-has b4)))
          (does-before (and b4 (about-does b4))))
-  (setf (gethash klass *meta*)
-      (make-about :has has :does does)))
-  (let* ((message (gensym "MESSAGE")))
-     `(defun ,klass (&key ,@has) 
+    (let* ((has (append has has-before))
+           (does (append does does-before)))
+      (setf (gethash klass *meta*)
+            (make-about :has has :does does))
+      (let* ((message (gensym "MESSAGE")))
+        `(defun ,klass (&key ,@has) 
             (let ((self (lambda (,message)
                            (case ,message
                              ,@(methods-as-case does)
                              ,@(datas-as-case (mapcar #'car has))))))
               (send self '_self! self)
               (send self '_isa! ',klass)
-              self))))
+              self))))))
+
         
 (let ((_counter 0))
   (defun counter () (incf _counter)))
@@ -308,6 +311,7 @@ object
                         (if (not (meta? one))
                           (push `(,one . ,(send _self one)) 
                                 slot-values)))))))
+
 ; uncomment the following when defklass is implemented
 (defklass
   account
@@ -321,7 +325,7 @@ object
                    (incf balance
                          (* interest-rate balance)))))
 ; uncomment this to see what is going on
-(xpand (account))
+'(xpand (account))
 ; uncomment the following when defklass is implemented
 (defklass
   trimmed-account
@@ -348,4 +352,4 @@ object
    (let ((acc (trimmed-account)))
       (print `(meta ,(send acc 'show))
    )))
-'(meta)
+(meta)
