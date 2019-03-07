@@ -290,7 +290,6 @@ object
               (send self '_self! self)
               (send self '_isa! ',klass)
               self))))))
-
         
 (let ((_counter 0))
   (defun counter () (incf _counter)))
@@ -311,7 +310,6 @@ object
                         (if (not (meta? one))
                           (push `(,one . ,(send _self one)) 
                                 slot-values)))))))
-
 ; uncomment the following when defklass is implemented
 (defklass
   account
@@ -345,7 +343,7 @@ object
         (print `(inheritance ,(send acc 'withdraw 20))))
       ))
 ; TODO: 3a show that the following works correctly
-;(inheritance)
+(inheritance)
 ;(xpand (trimmed-account))
 ; TODO: 3b. show that the following prints out the slots of an object.
 (defun meta ()
